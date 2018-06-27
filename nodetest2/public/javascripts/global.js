@@ -9,9 +9,18 @@ $(document).ready(function() {
 
     $('#userList table tbody').on('click', 'td a.linkshowuser', showUserInfo);
 
-    $('#btnAddUser').on('click', addUser);
+    $('#btnAddUser').on('click', function (e) {
+        addUser( e, '/users/adduser');
+    });
 
     $('#userList table tbody').on('click', 'td a.linkdeleteuser', deleteUser);
+
+    $('#userList table tbody').on('click', 'td a.linkupdateuser', updateUser);
+
+
+
+
+
 
 
 
@@ -35,6 +44,7 @@ function populateTable() {
             tableContent += '<tr>';
             tableContent += '<td><a href="#" class="linkshowuser" rel="' + this.username + '">' + this.username + '</a></td>';
             tableContent += '<td>' + this.email + '</td>';
+            tableContent += '<td><a href="#" class="linkupdateuser" rel="' + this._id + '">update</a></td>';
             tableContent += '<td><a href="#" class="linkdeleteuser" rel="' + this._id + '">delete</a></td>';
             tableContent += '</tr>';});
 
@@ -67,7 +77,7 @@ function showUserInfo(event) {
 };
 
 // Add User
-function addUser(event) {
+function addUser(event, url) {
     event.preventDefault();
 
     // Super basic validation - increase errorCount variable if any fields are blank
@@ -89,15 +99,16 @@ function addUser(event) {
             'gender': $('#addUser fieldset input#inputUserGender').val()
         }
 
+        console.log(newUser);
         // Use AJAX to post the object to our adduser service
         $.ajax({
             type: 'POST',
             data: newUser,
-            url: '/users/adduser',
+            url: url,
             dataType: 'JSON'
         }).done(function( response ) {
 
-            // Check for successful (blank) response
+            // Check for successful (blank) responseencséjük Oroszországban: Sztálingrád, Ka
             if (response.msg === '') {
 
                 // Clear the form inputs
@@ -161,3 +172,39 @@ function deleteUser(event) {
     }
 
 };
+
+function updateUser(event) {
+    event.preventDefault();
+
+    let userId = $(this).attr('rel');
+    let btnAddUser = $('#btnAddUser');
+    btnAddUser.css('display', 'none');
+    $('#addUser fieldset').append('<button id="btnUpdateUser" value="Update user" rel="'+ userId +'">Update user</button>')
+
+    $.ajax({
+        type: 'GET',
+        url: '/users/updateuser/' + userId
+    }).done(function( response ) {
+        console.log(response);
+        $('#addUser fieldset input#inputUserName').val(response[0]['username']);
+        $('#addUser fieldset input#inputUserEmail').val(response[0]['email']);
+        $('#addUser fieldset input#inputUserFullname').val(response[0]['fullname']);
+        $('#addUser fieldset input#inputUserGender').val(response[0]['gender']);
+        $('#addUser fieldset input#inputUserAge').val(response[0]['age']);
+        $('#addUser fieldset input#inputUserLocation').val(response[0]['location']);
+        $('#btnUpdateUser').on('click', saveUpdatedUser)
+
+    });
+};
+
+
+function saveUpdatedUser(event) {
+    event.preventDefault();
+    let btnUpdateUser = $('#btnUpdateUser');
+    addUser(event, '/users/saveupdateduser/' + $(btnUpdateUser).attr('rel'));
+    btnUpdateUser.remove();
+    $('#btnAddUser').css('display', 'block');
+
+
+
+}
